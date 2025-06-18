@@ -9,39 +9,16 @@ def login_challonge(usuario, apiKey):
 """
 Tournaments/Show: Muestra informacion de un torneo usando su URL
 Ref: https://api.challonge.com/v1/documents/tournaments/show
-Algunos atributos de interes:
+Se muestran 96 distintos atributos relacionados al torneo, algunos atributos de interes:
 name
 id
 url
 tournament_type
 progress_meter
 participants_count
-tie_breaks
-allow_participant_match_reporting
-hide_bracket_preview
-
-Cuando se usa la opcion 'include_participants = 1' en el API call, se crea un subdiccionario bajo el nombre 'participant{}' para cada jugador registrado.
-Algunos atributos de interes:
-id
-name
-seed
-
-Cuando se usa la opcion 'include_matches = 1' en el API call, se crea un array de subdiccionarios llamado 'matches[]', que incluye un diccionario para cada match jugado llamado 'match{}'.
-Algunos atributos de interes:
-id
-tournament_id
-player1_id
-player2_id
-winner_id
-loser_id
-round
-scores_csv
-started_at
-created_at
-updated_at: '2025-06-16T21:22:09.489+02:00'
-completed_at
-suggested_play_order
-forfeited
+tie_breaks: metodos elegidos como criterio de desempate
+allow_participant_match_reporting: permitir o no que cada jugador reporte sus propios resultados
+hide_bracket_preview: esconder el bracket hasta que el torneo inicie
 """
 def info_torneo(tourneyUrl):
     try:
@@ -58,7 +35,7 @@ def info_torneo(tourneyUrl):
         print(f"Error al hacer el llamado API: {e}")
 
 """
-Participants/Index: Muestra parametros importantes de todos los participantes de un torneo a partir de su URL
+Participants/Index: Muestra 11 parametros importantes de todos los participantes de un torneo a partir de su URL
 Ref: https://api.challonge.com/v1/documents/participants/index
 Algunos atributos de interes:
 id
@@ -68,6 +45,7 @@ seed
 def info_participantes(tourneyUrl):
     try:
         participantes = challonge.participants.index(tourneyUrl)
+        print(len(participantes))
         for participante in participantes:
             print(f"Nombre del jugador: {participante['name']}, ID: {participante['id']}, Seed: {participante['seed']}")
     except Exception as e:
@@ -81,7 +59,8 @@ id
 name
 seed
 
-Cuando se usa la opcion 'include_matches = 1' en el API call, se crea un array de subdiccionarios llamado 'matches[]', que incluye un diccionario para cada match jugado llamado 'match{}'.
+Cuando se usa la opcion 'include_matches = 1' en el API call, se crea una entrada del diccionario llamada 'matches{}', que contiene una 
+lista de N matches jugados. Cada match es un diccionario en si, con 33 atributos propios de cada match.
 Algunos atributos de interes:
 id
 tournament_id
@@ -89,22 +68,26 @@ player1_id
 player2_id
 winner_id
 loser_id
-round
-scores_csv
+round: numero de round en el torneo (jornada 1, por ejemplo)
+scores_csv: marcadores del match
 started_at
 created_at
 updated_at: '2025-06-16T21:22:09.489+02:00'
 completed_at
-suggested_play_order
+suggested_play_order: numero de encuentro sugerido por challonge
 forfeited
 """
-def info_participantes(tourneyUrl, id="265220791"):
+def historial_participantes(tourneyUrl, id="265220791"):
     try:
-        participante = challonge.participants.show(tourneyUrl, id, include_matches = 1)
-        print(participante['match'])
+        participante = challonge.participants.show(tourneyUrl, id, include_matches = 1)  # Diccionario con la info de cada jugador.
+        # print(participante['matches'])  # Lista de diccionarios con la info de cada match por separado.
+        # print(participante['matches'][0]['match'])  # Diccionario para cada match.
+        print(participante['matches'][0]['match']['round'])  
+        print(participante['matches'][0]['match']['suggested_play_order'])  
 
-        #for datos in participante:
-            #print(f"Nombre del jugador: {datos['name']}, ID: {datos['id']}, Seed: {datos['seed']}")
+        # for datos in participante['matches']:  # Se recorre la lista de atributos para cada match
+        #     print(datos['match'])
+        #     print(type(datos))
     except Exception as e:
        print(f"Error al hacer el llamado API: {e}")
 

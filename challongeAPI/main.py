@@ -25,7 +25,7 @@ while(True):
     elif opcion == "3":
         api_utils.info_participantes(tourneyUrl)
     elif opcion == "4":
-        api_utils.info_participantes(tourneyUrl)
+        api_utils.historial_participantes(tourneyUrl)
     elif opcion == "7":
         print("¡Adiós!")
         break
