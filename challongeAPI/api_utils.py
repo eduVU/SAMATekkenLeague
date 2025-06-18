@@ -1,15 +1,23 @@
 import challonge
-import pandas as pd
 import threading, concurrent.futures
 
-# Funcion para establecer los credenciales de Challonge.
+# thread_local = threading.local() 
+# Inicializacion del threading
+
+""" 
+Funcion para establecer los credenciales de Challonge.
+
+Parametros:
+usuario(Str): username de Challonge
+apiKey(Str): API Key unica creada para el usuario
+"""
 def login_challonge(usuario, apiKey):
     challonge.set_credentials(usuario, apiKey)
 
 """
-Tournaments/Show: Muestra informacion de un torneo usando su URL
+Tournaments/Show: Muestra en la terminal la informacion de un torneo usando su URL
 Ref: https://api.challonge.com/v1/documents/tournaments/show
-Se muestran 96 distintos atributos relacionados al torneo, algunos atributos de interes:
+Se muestran 98 distintos parametros del torneo, algunos atributos de interes:
 name
 id
 url
@@ -19,18 +27,62 @@ participants_count
 tie_breaks: metodos elegidos como criterio de desempate
 allow_participant_match_reporting: permitir o no que cada jugador reporte sus propios resultados
 hide_bracket_preview: esconder el bracket hasta que el torneo inicie
+
+Parametros:
+tourneyUrl(Str): URL del torneo, generada por Challonge
+torneo(Dict): diccionario con todos los parametros del torneo
 """
-def info_torneo(tourneyUrl):
+def mostrar_info_torneo(tourneyUrl):
     try:
         torneo = challonge.tournaments.show(tourneyUrl)
         print(f"\nNombre del torneo: {torneo['name']}")
         print(f"ID del torneo: {torneo['id']}")
+        print(f"URL del torneo: {torneo['url']}")
         print(f"Formato del torneo: {torneo['tournament_type']}")
         print(f"Progreso del torneo: {torneo['progress_meter']}%")
         print(f"Cantidad de participantes: {torneo['participants_count']}")
-        print(f"Mecanismos de desempate: {torneo['tie_breaks']}")
+        print(f"Mecanismos de desempate: ")
+        for item in torneo['tie_breaks']:
+            print("              "+item)
         print(f"Permitir que los participantes reporten sus matches: {torneo['allow_participant_match_reporting']}")
         print(f"Esconder el preview del bracket: {torneo['hide_bracket_preview']}")
+    except Exception as e:
+        print(f"Error al hacer el llamado API: {e}")
+
+"""
+Esta funcion obtiene la info del torneo en un formato mas estructurado y la devuelve en forma de diccionario
+
+Parametros:
+tourneyUrl(Str): URL del torneo, generada por Challonge
+torneo(Dict): diccionario con todos los parametros del torneo
+empates(Str)
+"""
+def obtener_datos_torneo(tourneyUrl):
+    try:
+        # Se extrae toda la info del torneo en un diccionario
+        torneo = challonge.tournaments.show(tourneyUrl)
+
+        # Se manipulan las entradas de 'Tie breaks' para que quepan en una sola fila
+        empates=""
+        for i in range(len(torneo['tie_breaks'])):
+            if i == 0:
+                empates = "".join([empates, torneo['tie_breaks'][i]])
+            else:
+                empates = ", ".join([empates, torneo['tie_breaks'][i]])
+
+        # Se conservan solo los parametros de interes
+        torneo = {
+            "Nombre": [torneo['name']],
+            "ID":[torneo['id']],
+            "URL": [torneo['url']],
+            "Formato": [torneo['tournament_type']],
+            "Progreso": [str(torneo['progress_meter'])+"%"],
+            "Participantes": [torneo['participants_count']],
+            "Mecanismos de desempate": [empates],
+            "Reporte de propios matches": [torneo['allow_participant_match_reporting']],
+            "Esconder bracket": [torneo['hide_bracket_preview']]
+        }
+        return torneo
     except Exception as e:
         print(f"Error al hacer el llamado API: {e}")
 
@@ -64,6 +116,7 @@ lista de N matches jugados. Cada match es un diccionario en si, con 33 atributos
 Algunos atributos de interes:
 id
 tournament_id
+state: open, closed, pending
 player1_id
 player2_id
 winner_id
@@ -84,6 +137,7 @@ def historial_participantes(tourneyUrl, id="265220791"):
         # print(participante['matches'][0]['match'])  # Diccionario para cada match.
         print(participante['matches'][0]['match']['round'])  
         print(participante['matches'][0]['match']['suggested_play_order'])  
+        print(participante['matches'][0]['match']['state'])  
 
         # for datos in participante['matches']:  # Se recorre la lista de atributos para cada match
         #     print(datos['match'])
@@ -91,9 +145,39 @@ def historial_participantes(tourneyUrl, id="265220791"):
     except Exception as e:
        print(f"Error al hacer el llamado API: {e}")
 
+"""
+Matches/Index: Muestra 33 parametros de los matches jugados o pendientes partir del URL del torneo
+Ref: https://api.challonge.com/v1/documents/matches/index
+Algunos atributos de interes:
+id
+tournament_id
+state: open, closed, pending
+player1_id
+player2_id
+winner_id
+loser_id
+round: numero de round en el torneo (jornada 1, por ejemplo)
+scores_csv: marcadores del match
+started_at
+created_at
+updated_at: '2025-06-16T21:22:09.489+02:00'
+completed_at
+suggested_play_order: numero de encuentro sugerido por challonge
+forfeited
 
+Utilizando el atributo 'participant_id=<player_id>' se pueden filtrar los matches de un jugador en específico.
+"""
+def info_matches(tourneyUrl):
+    try:
+        matches = challonge.matches.index(tourneyUrl)  # Diccionario con la info de cada jugador.
+        # print(matches)  # Listado de diccionarios.
+        # print(matches[0])  # Cada elemento de la lista de matches es un diccionario con la info del match.
 
-# thread_local = threading.local()
+        # for datos in participante['matches']:  # Se recorre la lista de atributos para cada match
+        #     print(datos['match'])
+        #     print(type(datos))
+    except Exception as e:
+       print(f"Error al hacer el llamado API: {e}")
 
 # # Esta funcion crea una sesión de requests local para threading en caso de que no exista una.
 # def crear_sesion():
