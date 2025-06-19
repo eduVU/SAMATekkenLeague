@@ -19,7 +19,7 @@ def inicializar_archivos(nombre_archivo):
     if os.path.exists(nombre_archivo):
         # Si existe, se carga el contenido en un DataFrame
         try:
-            dfCsv = pd.read_csv(nombre_archivo)
+            dfCsv = pd.read_csv(nombre_archivo, index_col=0)
             print(f"Archivo '{nombre_archivo}' cargado exitosamente.")
             estatus = "ok"
             return dfCsv, estatus
@@ -44,26 +44,38 @@ df(DataFrame): DataFrame de entrada
 """
 def mostrardf(df):
     print(df.to_string())
-
 """
 Esta funcion crea un nuevo DataFrame con la informacion general del torneo consultado por medio de su URL
 
 Parametros:
 tourneyUrl(String): URL del torneo por consultar
-datosTorneo(Dict): diccionario con toda la info recolectada del torneo mediante API
-dfTorneo(DataFrame): nuevo DataFrame con la informacion actualizada del torneo
+modo(String): determina el tipo de registro que se desea ('torneo', 'jugadores')
+datos(Dict): diccionario con toda la info recolectada mediante API
+dfFinal(DataFrame): nuevo DataFrame con la informacion actualizada
+estatusArchivo(Str): almacena el estado del archivo de registro asociado, "ok" significa que el archivo existe y no esta vacio
 """
-def crear_registro_torneo(tourneyUrl):
-    # Se obtiene un diccionario con los datos del torneo
-    datosTorneo = api_utils.obtener_datos_torneo(tourneyUrl)
+def crear_registro(tourneyUrl, modo):
+    if modo == "torneo":
+        # Se obtiene un diccionario con los datos del torneo o de los jugadores
+        datos = api_utils.obtener_datos_torneo(tourneyUrl)
+        
+        # Se crea un DataFrame con los nuevos datos
+        dfFinal = pd.DataFrame.from_dict(datos, orient='index', columns=["Valor"])
+        
+        # Se sobreescribe el archivo CSV correspondiente y se muestran los nuevos datos en la terminal
+        dfFinal.to_csv("SAMATekkenLeague/challongeAPI/torneo.csv", index=True)
+        print("El archivo 'SAMATekkenLeague/challongeAPI/torneo.csv' ha sido actualizado con los siguientes datos: \n")
+        mostrardf(dfFinal)
 
-    # Se crea un DataFrame con los nuevos datos
-    dfTorneo = pd.DataFrame(datosTorneo)
+    elif modo == "jugadores":
+        datos = api_utils.obtener_datos_jugadores(tourneyUrl)
+        dfFinal = pd.DataFrame.from_dict(datos, orient='index')
 
-    # Se sobreescribe el archivo CSV del torneo
-    dfTorneo.to_csv("SAMATekkenLeague/challongeAPI/torneo.csv", index=False)
+        # Asegurarse que el índice tenga nombre para que se guarde bien en el CSV
+        dfFinal.index.name = "Nombre"
+        dfFinal.to_csv("SAMATekkenLeague/challongeAPI/jugadores.csv", index=True)
+        print("El archivo 'SAMATekkenLeague/challongeAPI/jugadores.csv' ha sido actualizado con los siguientes datos: \n")
+        mostrardf(dfFinal)
 
-    # Se muestran los nuevos datos en la terminal
-    print("El archivo 'SAMATekkenLeague/challongeAPI/torneo.csv' ha sido actualizado con los siguientes datos: \n")
-    mostrardf(dfTorneo)
-    return dfTorneo
+    estatusArchivo = "ok"
+    return dfFinal, estatusArchivo

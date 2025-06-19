@@ -3,7 +3,6 @@ import api_utils
 import data_utils
 
 #------------------------------- MAIN -----------------------------
-
 # Credenciales para el uso del API: username, API Key y URL del torneo
 usuario = "BurningKnuckle"
 apiKey = "8wvK5aoyASVddO1xttkrVWyCNKlpsxYdvnFluIF3"
@@ -32,7 +31,13 @@ while(True):
         if estatusTorneo == 'ok_empty':
             print("El archivo de registro de torneos esta vacio")
         else:
+            print("Datos del ultimo torneo: ")
             data_utils.mostrardf(dfTorneo)
+        if estatusJugadores == 'ok_empty':
+            print("\nEl archivo de registro de participantes esta vacio")
+        else:
+            print("\nDatos de los participantes: ")
+            data_utils.mostrardf(dfJugadores)        
     elif opcion == "2":
         tourneyUrl = input("\nIngrese la nueva URL del torneo: \n") 
         print("¡Cambio registrado con exito!")
@@ -40,12 +45,14 @@ while(True):
         api_utils.mostrar_info_torneo(tourneyUrl)
         opcionTorneo = input("\n¿Desea actualizar el registro del torneo? (y/n): \n")
         if opcionTorneo == 'y':
-            dfTorneo = data_utils.crear_registro_torneo(tourneyUrl)
+            dfTorneo, estatusTorneo = data_utils.crear_registro(tourneyUrl, "torneo")
+    elif opcion == "4":
+        api_utils.mostrar_info_participantes(tourneyUrl)
+        opcionJugadores = input("\n¿Desea actualizar el registro de los jugadores? (y/n): \n")
+        if opcionJugadores == 'y':
+            dfJugadores, estatusJugadores = data_utils.crear_registro(tourneyUrl, "jugadores")
 
 
-
-    elif opcion == "3":
-        api_utils.info_participantes(tourneyUrl)
     elif opcion == "4":
         api_utils.historial_participantes(tourneyUrl)
     elif opcion == "5":

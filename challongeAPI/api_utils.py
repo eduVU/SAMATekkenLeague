@@ -72,15 +72,15 @@ def obtener_datos_torneo(tourneyUrl):
 
         # Se conservan solo los parametros de interes
         torneo = {
-            "Nombre": [torneo['name']],
-            "ID":[torneo['id']],
-            "URL": [torneo['url']],
-            "Formato": [torneo['tournament_type']],
-            "Progreso": [str(torneo['progress_meter'])+"%"],
-            "Participantes": [torneo['participants_count']],
-            "Mecanismos de desempate": [empates],
-            "Reporte de propios matches": [torneo['allow_participant_match_reporting']],
-            "Esconder bracket": [torneo['hide_bracket_preview']]
+        "Nombre": [torneo['name']],
+        "ID":[torneo['id']],
+        "URL": [torneo['url']],
+        "Formato": [torneo['tournament_type']],
+        "Progreso": [str(torneo['progress_meter'])+"%"],
+        "Participantes": [torneo['participants_count']],
+        "Mecanismos de desempate": [empates],
+        "Reporte de propios matches": [torneo['allow_participant_match_reporting']],
+        "Esconder bracket": [torneo['hide_bracket_preview']]
         }
         return torneo
     except Exception as e:
@@ -93,15 +93,48 @@ Algunos atributos de interes:
 id
 name
 seed
+
+Parametros:
+tourneyUrl(Str): URL del torneo por consultar
+participantes(List): listado de participantes del torneo
+participantes[i](Dict): diccionario con los datos de un participante en particular
 """
-def info_participantes(tourneyUrl):
+def mostrar_info_participantes(tourneyUrl):
     try:
         participantes = challonge.participants.index(tourneyUrl)
-        print(len(participantes))
+        print(f"Este torneo cuenta con {len(participantes)} participantes: \n")
         for participante in participantes:
-            print(f"Nombre del jugador: {participante['name']}, ID: {participante['id']}, Seed: {participante['seed']}")
+            print(f"Nombre: {participante['name']}, ID: {participante['id']}, Seed: {participante['seed']}")
     except Exception as e:
        print(f"Error al hacer el llamado API: {e}")
+
+"""
+Esta funcion obtiene la info de los participantes en un formato mas estructurado y la devuelve en forma de diccionario
+
+Parametros:
+tourneyUrl(Str): URL del torneo, generada por Challonge
+participantes(List): listado de participantes del torneo y su informacion obtenida del API
+jugadores(Dict): diccionario anidado con los datos de cada jugador
+nombre(Str): nombre de cada jugador, sirve como key de cada diccionario y para crear el index del DataFrame
+"""
+def obtener_datos_jugadores(tourneyUrl):
+    try:
+        # Se extrae la información de los participantes
+        participantes = challonge.participants.index(tourneyUrl)
+
+        # Diccionario con los participantes, donde la clave es el nombre del jugador
+        jugadores = {}
+        for player in participantes:
+            nombre = player['name']
+            jugadores[nombre] = {
+                "ID": player['id'],
+                "Seed": player['seed'],
+            }
+        return jugadores
+    except Exception as e:
+        print(f"Error al hacer el llamado API: {e}")
+        return {}
+
 
 """
 Participants/Show: Muestra parametros especificos de un participante a partir de su ID y del URL del torneo
@@ -229,3 +262,5 @@ def info_matches(tourneyUrl):
 #     tablaPeliculas=pd.DataFrame(listaPeliculas)  # La entrada "entries" del resultado del API es la que contiene la info importante en forma de una lista de diccionarios.
 #     tablaTranspuesta = tablaPeliculas.T  # Transposición del dataframe para un manejo más sencillo del mismo.
 #     return tablaTranspuesta
+
+
