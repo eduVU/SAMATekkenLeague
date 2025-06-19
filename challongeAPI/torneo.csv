@@ -1,2 +1,10 @@
-Nombre,ID,URL,Formato,Progreso,Participantes,Mecanismos de desempate,Reporte de propios matches,Esconder bracket
-SAMA Tekken League - Temporada 1,16383787,nnnijihigdrgser,round robin,27%,11,"game w/l difference, points difference, match wins vs tied",False,True
+,Valor
+Nombre,SAMA Tekken League - Temporada 1
+ID,16383787
+URL,nnnijihigdrgser
+Formato,round robin
+Progreso,27%
+Participantes,11
+Mecanismos de desempate,"game w/l difference, points difference, match wins vs tied"
+Reporte de propios matches,False
+Esconder bracket,True
