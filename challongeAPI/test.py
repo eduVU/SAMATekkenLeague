@@ -8,21 +8,12 @@ tourneyUrl = "nnnijihigdrgser"
 
 challonge.set_credentials(usuario, apiKey)
 
+# Tests del torneo
 try:
-    torneo = challonge.tournaments.show(tourneyUrl, include_participants = 1, include_matches = 1)
-    # print(len(tournament.keys()))
-    # print(f"\nNombre del Torneo: {tournament['name']}")
-    # print(f"ID del Torneo: {tournament['id']}")
-    # print(f"Formato del Torneo: {tournament['tournament_type']}")
-    # print(f"Cantidad de Participantes: {tournament['participants_count']}")
-    # print(f"Allow Participant Match Reporting: {tournament['allow_participant_match_reporting']}")
-    # print(f"Hide Bracket Preview: {tournament['hide_bracket_preview']}")
-    # print(f"Mecanismos de desempate: {tournament['tie_breaks']}")
-    # print(type(tournament['tie_breaks']))
-    # print(len(tournament['tie_breaks']))
-    # print(f"Mecanismos de desempate: {tournament['tie_breaks'][0]}")
-    # print(type(tournament['tie_breaks'][0]))
+    # Se extrae toda la info del torneo en un diccionario
+    torneo = challonge.tournaments.show(tourneyUrl)
 
+    # Se manipulan las entradas de 'Tie breaks' para que quepan en una sola fila
     empates=""
     for i in range(len(torneo['tie_breaks'])):
         if i == 0:
@@ -32,33 +23,75 @@ try:
 
     # Se conservan solo los parametros de interes
     torneo = {
-        "Nombre": [torneo['name']],
-        "ID":[torneo['id']],
-        "URL": [torneo['url']],
-        "Formato": [torneo['tournament_type']],
-        "Progreso": [str(torneo['progress_meter'])+"%"],
-        "Participantes": [torneo['participants_count']],
-        "Mecanismos de desempate": [empates],
-        "Reporte de propios matches": [torneo['allow_participant_match_reporting']],
-        "Esconder bracket": [torneo['hide_bracket_preview']]
+        "Nombre": torneo['name'],
+        "ID":torneo['id'],
+        "URL": torneo['url'],
+        "Formato": torneo['tournament_type'],
+        "Progreso": str(torneo['progress_meter'])+"%",
+        "Participantes": torneo['participants_count'],
+        "Mecanismos de desempate": empates,
+        "Reporte de propios matches": torneo['allow_participant_match_reporting'],
+        "Esconder bracket": torneo['hide_bracket_preview']
     }
-    dfTorneo = pd.DataFrame(torneo)
-    print(dfTorneo.to_string())
-
+    df = pd.Series(torneo)
+    print(df.to_string())
 except Exception as e:
     print(f"Error al hacer el llamado API: {e}")
 
 
-# empates=""
-# for item in torneo['tie_breaks']:
-#     empates += item
-# print(empates)
+# --------------------------------------------------------
 
+# Tests de los participantes
 # try:
+#     # Se extrae toda la info de los participantes en una lista
 #     participantes = challonge.participants.index(tourneyUrl)
-#     for participante in participantes:
-#         print(f"Nombre del jugador: {participante['name']}, ID: {participante['id']}, Seed: {participante['seed']}")
+#     # print(participantes)
+
+#     # Diccionario que va a contener subdiccionarios para cada participante
+#     jugadores = {}
+
+#     # Se crea un diccionario con los datos relevantes de cada participante y se agrega al diccionario principal
+#     for i in range(len(participantes)):
+#         jugadores[str(i+1)] = {
+#             "Nombre": participantes[i]['name'],
+#             "ID": participantes[i]['id'],
+#             "Seed": participantes[i]['seed'],
+#         }
+
+#     # print(jugadores)
+#     df = pd.DataFrame(jugadores)
+#     print(df.transpose().to_string())
+
 # except Exception as e:
 #     print(f"Error al hacer el llamado API: {e}")
 
-    
+#-----------------------------------------------------------
+
+# Ejemplo de DataFrame con diccionario anidado
+# empleados = {
+#     "departamento_ventas": {
+#         "empleado1": {
+#             "nombre": "Ana",
+#             "edad": 30,
+#             "cargo": "Vendedor"
+#         },
+#         "empleado2": {
+#             "nombre": "Luis",
+#             "edad": 25,
+#             "cargo": "Gerente de ventas"
+#         }
+#     },
+#     "departamento_marketing": {
+#         "empleado3": {
+#             "nombre": "Carlos",
+#             "edad": 28,
+#             "cargo": "Marketing Manager"
+#         }
+#     }
+# }
+
+# df = pd.DataFrame(empleados)
+# print(df.to_string())
+
+
+
