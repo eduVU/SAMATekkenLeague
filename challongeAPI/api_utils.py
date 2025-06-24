@@ -1,4 +1,5 @@
 import challonge
+import numpy as np
 import threading, concurrent.futures
 
 # thread_local = threading.local() 
@@ -55,7 +56,7 @@ Esta funcion obtiene la info del torneo en un formato mas estructurado y la devu
 Parametros:
 tourneyUrl(Str): URL del torneo, generada por Challonge
 torneo(Dict): diccionario con todos los parametros del torneo
-empates(Str)
+empates(Str): en esta variable se guardan todos los mecanismos de desempate en un solo string para mejor presentacion de los datos
 """
 def obtener_datos_torneo(tourneyUrl):
     try:
@@ -99,7 +100,7 @@ tourneyUrl(Str): URL del torneo por consultar
 participantes(List): listado de participantes del torneo
 participantes[i](Dict): diccionario con los datos de un participante en particular
 """
-def mostrar_info_participantes(tourneyUrl):
+def mostrar_info_jugadores(tourneyUrl):
     try:
         participantes = challonge.participants.index(tourneyUrl)
         print(f"Este torneo cuenta con {len(participantes)} participantes: \n")
@@ -133,8 +134,6 @@ def obtener_datos_jugadores(tourneyUrl):
         return jugadores
     except Exception as e:
         print(f"Error al hacer el llamado API: {e}")
-        return {}
-
 
 """
 Participants/Show: Muestra parametros especificos de un participante a partir de su ID y del URL del torneo
@@ -145,72 +144,169 @@ name
 seed
 
 Cuando se usa la opcion 'include_matches = 1' en el API call, se crea una entrada del diccionario llamada 'matches{}', que contiene una 
-lista de N matches jugados. Cada match es un diccionario en si, con 33 atributos propios de cada match.
+lista de N matches jugados. Cada match es un diccionario en si, con 33 atributos propios de cada match
 Algunos atributos de interes:
-id
-tournament_id
 state: open, closed, pending
 player1_id
 player2_id
 winner_id
-loser_id
 round: numero de round en el torneo (jornada 1, por ejemplo)
 scores_csv: marcadores del match
-started_at
-created_at
-updated_at: '2025-06-16T21:22:09.489+02:00'
-completed_at
 suggested_play_order: numero de encuentro sugerido por challonge
-forfeited
+
+Parametros:
+tourneyUrl(Str): URL del torneo, generada por Challonge
+jugadores(Dict): diccionario con todos los jugadores del torneo obtenidos por API
+idsJugadores(Dict): diccionario depurado que contiene los pares id:nombre para cada jugador
+partidas(List): lista de diccionarios con la info de todas las partidas para cada jugador
+orden(Str): almacena el orden del jugador consultado en cada pelea (J1 o J2)
+oponente(Str): almacena el orden del jugador rival en cada pelea (J1 o J2)
+resultado(Str): almacena el resultado del match para el jugador consultado (Victoria o Derrota)
+sets(List): lista con los marcadores de las peleas de cada match (ej: 3-1)
+roundsTotales(List): listado de los rounds ganados por cada jugador, obtenidos al depurar la informacion los marcadores
+roundsJ1(List): listado con los rounds ganados por el jugador 1 en cada pelea
+roundsJ2(List): listado con los rounds ganados por el jugador 2 en cada pelea
+rondasJ1(NumpyArray): array de enteros creado a partir de la lista roundsJ1
+rondasJ2(NumpyArray): array de enteros creado a partir de la lista roundsJ2
+diferenciaRelativa(Int): valor de la diferencia de rounds obtenida para el jugador consultado en cada match (diferencia = rounds ganados - rounds perdidos)
 """
-def historial_participantes(tourneyUrl, id="265220791"):
+def mostrar_info_partidas(tourneyUrl):
     try:
-        participante = challonge.participants.show(tourneyUrl, id, include_matches = 1)  # Diccionario con la info de cada jugador.
-        # print(participante['matches'])  # Lista de diccionarios con la info de cada match por separado.
-        # print(participante['matches'][0]['match'])  # Diccionario para cada match.
-        print(participante['matches'][0]['match']['round'])  
-        print(participante['matches'][0]['match']['suggested_play_order'])  
-        print(participante['matches'][0]['match']['state'])  
+        jugadores = challonge.participants.index(tourneyUrl)  # Se llama a este API para obtener el id de cada jugador
+        # Rutina para crear un diccionario de IDs y nombres de los jugadores del torneo
+        idsJugadores = {}
+        for jugador in jugadores:
+            idsJugadores[jugador['id']] = jugador['name']
+    
+        # Se llama a este API para obtener las partidas de cada jugador segun su ID
+        for id in idsJugadores:
+            partidas = challonge.participants.show(tourneyUrl, id, include_matches=1)  # Lista de diccionarios con la info de todas las partidas para cada jugador
+            print(f"Jugador: {partidas['name']}")
 
-        # for datos in participante['matches']:  # Se recorre la lista de atributos para cada match
-        #     print(datos['match'])
-        #     print(type(datos))
+            # Se accede a cada registro de peleas por jugador, uno a uno
+            for partida in partidas['matches']:
+                # Solo se muestran las partidas que ya se jugaron
+                if partida['match']['state'] == 'complete':
+                    print(f"Ronda: {partida['match']['round']}")
+                    print(f"     No. Partida: {partida['match']['suggested_play_order']}")
+
+                    # Rutina logica para determinar el nombre del oponente de cada ronda
+                    if partida['match']['player1_id'] == id:
+                        orden = "primero"
+                        oponente = idsJugadores.get(partida['match']['player2_id'])
+                    else:
+                        orden = "segundo"
+                        oponente = idsJugadores.get(partida['match']['player1_id'])
+                    print(f"     Oponente: {oponente}")
+                    
+                    # Rutina logica para determinar si el jugador fue el vencedor de la pelea
+                    if partida['match']['winner_id'] == id:
+                        resultado = 'Victoria'
+                    else:
+                        resultado = 'Derrota'
+                    print(f'     Resultado: {resultado}')
+                    print(f"     Marcadores: {partida['match']['scores_csv']}")
+
+                    roundsJ1 = []
+                    # Rutina logica para determinar la diferencia de rounds para esta pelea
+                    roundsJ2 = []
+                    roundsTotales = []
+                    sets = partida['match']['scores_csv'].split(',')
+                    for pelea in sets:
+                        roundsTotales = pelea.split('-')  # roundsTotales almacena los runds de J1 y los del J2, ej [3, 1]
+                        roundsJ1.append(int(roundsTotales[0]))  # La primera posicion corresponde al J1
+                        roundsJ2.append(int(roundsTotales[1]))  # La segunda posicion corresponde al J2
+                    rondasJ1 = np.array(roundsJ1)
+                    rondasJ2 = np.array(roundsJ2)
+                    diferenciaRelativa = rondasJ1.sum() - rondasJ2.sum()  # Diferencia de rounds considerando que el jugador es J1
+                    # Ajuste en caso de que el jugador sea J2
+                    if orden == 'segundo':
+                        diferenciaRelativa *= -1
+                    print(f"     Diferencia de rounds: {diferenciaRelativa}")
+            print("\n")
     except Exception as e:
-       print(f"Error al hacer el llamado API: {e}")
+        print(f"Error al hacer el llamado API: {e}")
 
 """
-Matches/Index: Muestra 33 parametros de los matches jugados o pendientes partir del URL del torneo
-Ref: https://api.challonge.com/v1/documents/matches/index
-Algunos atributos de interes:
-id
-tournament_id
-state: open, closed, pending
-player1_id
-player2_id
-winner_id
-loser_id
-round: numero de round en el torneo (jornada 1, por ejemplo)
-scores_csv: marcadores del match
-started_at
-created_at
-updated_at: '2025-06-16T21:22:09.489+02:00'
-completed_at
-suggested_play_order: numero de encuentro sugerido por challonge
-forfeited
+Esta funcion obtiene la info de las partidas de cada jugador en un formato mas estructurado y la devuelve en forma de lista de diccionarios
 
-Utilizando el atributo 'participant_id=<player_id>' se pueden filtrar los matches de un jugador en específico.
+Parametros:
+tourneyUrl(Str): URL del torneo, generada por Challonge
+jugadores(Dict): diccionario con todos los jugadores del torneo obtenidos por API
+partidas(List): lista de diccionarios con la info de todas las partidas para cada jugador
+orden(Str): almacena el orden del jugador consultado en cada pelea (J1 o J2)
+oponente(Str): almacena el orden del jugador rival en cada pelea (J1 o J2)
+resultado(Str): almacena el resultado del match para el jugador consultado (Victoria o Derrota)
+sets(List): lista con los marcadores de las peleas de cada match (ej: 3-1)
+roundsTotales(List): listado de los rounds ganados por cada jugador, obtenidos al depurar la informacion los marcadores
+roundsJ1(List): listado con los rounds ganados por el jugador 1 en cada pelea
+roundsJ2(List): listado con los rounds ganados por el jugador 2 en cada pelea
+rondasJ1(NumpyArray): array de enteros creado a partir de la lista roundsJ1
+rondasJ2(NumpyArray): array de enteros creado a partir de la lista roundsJ2
+diferenciaRelativa(Int): valor de la diferencia de rounds obtenida para el jugador consultado en cada match (diferencia = rounds ganados - rounds perdidos)
+historialTotal(List): lista con los diccionarios que contienen los datos de partidas para cada jugador
+historialIndividual(Dict): diccionario volatil con los datos que se recolectan para cada jugador
 """
-def info_matches(tourneyUrl):
+def obtener_datos_partidas(tourneyUrl):
     try:
-        matches = challonge.matches.index(tourneyUrl)  # Diccionario con la info de cada jugador.
-        # print(matches)  # Listado de diccionarios.
-        # print(matches[0])  # Cada elemento de la lista de matches es un diccionario con la info del match.
+        historialTotal = []  # Esta lista tendra un diccionario para cada jugador y sus partidas
+        jugadores = challonge.participants.index(tourneyUrl)  # Se llama a este API para obtener el id de cada jugador
+        # Rutina logica para obtener todos los datos de las partidas para cada jugador
+        for jugador in jugadores:
+            partidas = challonge.participants.show(tourneyUrl, jugador['id'], include_matches=1)  # Lista de diccionarios con la info de todas las partidas para un solo jugador
 
-        # for datos in participante['matches']:  # Se recorre la lista de atributos para cada match
-        #     print(datos['match'])
-        #     print(type(datos))
+            # Se accede a cada registro de peleas para un jugador, una a una
+            for partida in partidas['matches']:
+                historialIndividual = {}  # Este diccionario tendra el historial de partidas de un solo jugador
+                # Solo se muestran las partidas que ya se jugaron
+                if partida['match']['state'] == 'complete':
+                    historialIndividual['Jugador'] = partidas['name']  # Se agrega el nombre del jugador consultado al historial individual
+                    historialIndividual['Ronda'] = partida['match']['round']  # Se agrega la ronda al historial individual
+                    historialIndividual['No. Partida'] = partida['match']['suggested_play_order']  # Se agrega el no. de pelea al historial individual
+
+                    # Rutina logica para determinar el nombre del oponente de cada ronda
+                    if partida['match']['player1_id'] == jugador['id']:
+                        orden = "primero"
+                        datosOponente = challonge.participants.show(tourneyUrl, partida['match']['player2_id'])
+                        oponente = datosOponente['name']
+                    else:
+                        orden = "segundo"
+                        datosOponente = challonge.participants.show(tourneyUrl, partida['match']['player1_id'])
+                        oponente = datosOponente['name']
+                    historialIndividual['Oponente'] = oponente  # Se agrega el nombre del oponente al historial individual
+
+                    # Rutina logica para determinar si el jugador fue el vencedor de la pelea
+                    if partida['match']['winner_id'] == jugador['id']:
+                        resultado = 'Victoria'
+                    else:
+                        resultado = 'Derrota'
+                    historialIndividual['Resultado'] = resultado  # Se agrega el resultado de la pelea al historial individual
+
+                    # Rutina logica para registrar el resultado de cada set en un campo aparte
+                    sets = partida['match']['scores_csv'].split(',')
+                    for i in range(len(sets)):
+                        historialIndividual[f'Set {i+1}'] = sets[i]  # Se agrega el resultado de cada set al historial individual
+
+                    # Rutina logica para determinar la diferencia de rounds para esta pelea
+                    roundsJ1 = []
+                    roundsJ2 = []
+                    roundsTotales = []
+                    for pelea in sets:
+                        roundsTotales = pelea.split('-')  # roundsTotales almacena los runds de J1 y los del J2, ej [3, 1]
+                        roundsJ1.append(int(roundsTotales[0]))  # La primera posicion corresponde al J1
+                        roundsJ2.append(int(roundsTotales[1]))  # La segunda posicion corresponde al J2
+                    rondasJ1 = np.array(roundsJ1)
+                    rondasJ2 = np.array(roundsJ2)
+                    diferenciaRelativa = rondasJ1.sum() - rondasJ2.sum()  # Diferencia de rounds considerando que el jugador es J1
+                    # Ajuste en caso de que el jugador sea J2
+                    if orden == 'segundo':
+                        diferenciaRelativa *= -1
+                    historialIndividual['Diferencia de rounds'] = diferenciaRelativa  # Se agrega la diferencia relativa de rounds al historial individual
+                    historialTotal.append(historialIndividual)  # Al historial total se agregan los datos del jugador consultado
+        return historialTotal
     except Exception as e:
-       print(f"Error al hacer el llamado API: {e}")
+        print(f"Error al hacer el llamado API: {e}")
+
 
 # # Esta funcion crea una sesión de requests local para threading en caso de que no exista una.
 # def crear_sesion():
@@ -262,5 +358,3 @@ def info_matches(tourneyUrl):
 #     tablaPeliculas=pd.DataFrame(listaPeliculas)  # La entrada "entries" del resultado del API es la que contiene la info importante en forma de una lista de diccionarios.
 #     tablaTranspuesta = tablaPeliculas.T  # Transposición del dataframe para un manejo más sencillo del mismo.
 #     return tablaTranspuesta
-
-
