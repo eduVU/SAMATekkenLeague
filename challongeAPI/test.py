@@ -66,86 +66,67 @@ challonge.set_credentials(usuario, apiKey)
 
 #-----------------------------------------------------------
 # Tests de las partidas
-"""
-Participants/Show: Muestra parametros especificos de un participante a partir de su ID y del URL del torneo
-Ref: https://api.challonge.com/v1/documents/participants/show
-Algunos atributos de interes:
-id
-name
-seed
+# try:
+#     historialTotal = []  # Esta lista tendra un diccionario para cada jugador y sus partidas
+#     jugadores = challonge.participants.index(tourneyUrl)  # Se llama a este API para obtener el id de cada jugador
+#     # Rutina logica para obtener todos los datos de las partidas para cada jugador
+#     for jugador in jugadores:
+#         partidas = challonge.participants.show(tourneyUrl, jugador['id'], include_matches=1)  # Lista de diccionarios con la info de todas las partidas para un solo jugador
 
-Cuando se usa la opcion 'include_matches = 1' en el API call, se crea una entrada del diccionario llamada 'matches{}', que contiene una 
-lista de N matches jugados. Cada match es un diccionario en si, con 33 atributos propios de cada match.
-Algunos atributos de interes:
-state: open, closed, pending
-player1_id
-player2_id
-winner_id
-round: numero de round en el torneo (jornada 1, por ejemplo)
-scores_csv: marcadores del match
-suggested_play_order: numero de encuentro sugerido por challonge
+#         # Se accede a cada registro de peleas para un jugador, una a una
+#         for partida in partidas['matches']:
+#             historialIndividual = {}  # Este diccionario tendra el historial de partidas de un solo jugador
+#             # Solo se muestran las partidas que ya se jugaron
+#             if partida['match']['state'] == 'complete':
+#                 historialIndividual['Jugador'] = partidas['name']  # Se agrega el nombre del jugador consultado al historial individual
+#                 historialIndividual['Ronda'] = partida['match']['round']  # Se agrega la ronda al historial individual
+#                 historialIndividual['No. Partida'] = partida['match']['suggested_play_order']  # Se agrega el no. de pelea al historial individual
 
-Parametros:
+#                 # Rutina logica para determinar el nombre del oponente de cada ronda
+#                 if partida['match']['player1_id'] == jugador['id']:
+#                     orden = "primero"
+#                     datosOponente = challonge.participants.show(tourneyUrl, partida['match']['player2_id'])
+#                     oponente = datosOponente['name']
+#                 else:
+#                     orden = "segundo"
+#                     datosOponente = challonge.participants.show(tourneyUrl, partida['match']['player1_id'])
+#                     oponente = datosOponente['name']
+#                 historialIndividual['Oponente'] = oponente  # Se agrega el nombre del oponente al historial individual
 
-"""
-try:
-    jugadores = challonge.participants.index(tourneyUrl)  # Se llama a este API para obtener el id de cada jugador
-    # Rutina para crear un diccionario de IDs y nombres de los jugadores del torneo
-    idsJugadores = {}
-    for jugador in jugadores:
-        idsJugadores[jugador['id']] = jugador['name']
-    historialTotal = {}  # Este diccionario tendra un subdiccionario para cada jugador y sus partidas
- 
-    # Se llama a este API para obtener las partidas de cada jugador segun su ID
-    for id in idsJugadores:
-        historialIndividual = {}  # Este diccionario tendra el historial de partidas de un solo jugador
-        partidas = challonge.participants.show(tourneyUrl, id, include_matches=1)  # Lista de diccionarios con la info de todas las partidas para cada jugador.
-        print(f"Jugador: {partidas['name']}")
+#                 # Rutina logica para determinar si el jugador fue el vencedor de la pelea
+#                 if partida['match']['winner_id'] == jugador['id']:
+#                     resultado = 'Victoria'
+#                 else:
+#                     resultado = 'Derrota'
+#                 historialIndividual['Resultado'] = resultado  # Se agrega el resultado de la pelea al historial individual
 
-        # Se accede a cada registro de peleas por jugador, uno a uno
-        for partida in partidas['matches']:
-            # Solo se muestran las partidas que ya se jugaron
-            if partida['match']['state'] == 'complete':
-                print(f"Ronda: {partida['match']['round']}")
-                print(f"     No. Partida: {partida['match']['suggested_play_order']}")
-                # Rutina logica para determinar el nombre del oponente de cada ronda
-                if partida['match']['player1_id'] == id:
-                    orden = "primero"
-                    oponente = idsJugadores.get(partida['match']['player2_id'])
-                else:
-                    orden = "segundo"
-                    oponente = idsJugadores.get(partida['match']['player1_id'])
-                print(f"     Oponente: {oponente}")
-                # Rutina logica para determinar si el jugador fue el vencedor de la pelea
-                if partida['match']['winner_id'] == id:
-                    print('     Resultado: Victoria')
-                else:
-                    print('     Resultado: Derrota')
-                print(f"     Marcadores: {partida['match']['scores_csv']}")
-                # Rutina logica para determinar la diferencia de rounds para esta pelea
-                roundsJ1 = []
-                roundsJ2 = []
-                roundsTotales = []
-                sets = partida['match']['scores_csv'].split(',')
-                for pelea in sets:
-                    roundsTotales = pelea.split('-')
-                    roundsJ1.append(int(roundsTotales[0]))
-                    roundsJ2.append(int(roundsTotales[1]))
-                roundsJ1 = np.array(roundsJ1)
-                roundsJ2 = np.array(roundsJ2)
-                diferenciaRelativa = roundsJ1.sum() - roundsJ2.sum()
-                if orden == 'segundo':
-                    diferenciaRelativa *= -1
-                print(f"     Diferencia de rounds: {diferenciaRelativa}")
+#                 # Rutina logica para registrar el resultado de cada set en un campo aparte
+#                 sets = partida['match']['scores_csv'].split(',')
+#                 for i in range(len(sets)):
+#                     historialIndividual[f'Set {i+1}'] = sets[i]  # Se agrega el resultado de cada set al historial individual
 
-                
-                
-                
-                
-        print("\n")
+#                 # Rutina logica para determinar la diferencia de rounds para esta pelea
+#                 roundsJ1 = []
+#                 roundsJ2 = []
+#                 roundsTotales = []
+#                 for pelea in sets:
+#                     roundsTotales = pelea.split('-')  # roundsTotales almacena los runds de J1 y los del J2, ej [3, 1]
+#                     roundsJ1.append(int(roundsTotales[0]))  # La primera posicion corresponde al J1
+#                     roundsJ2.append(int(roundsTotales[1]))  # La segunda posicion corresponde al J2
+#                 rondasJ1 = np.array(roundsJ1)
+#                 rondasJ2 = np.array(roundsJ2)
+#                 diferenciaRelativa = rondasJ1.sum() - rondasJ2.sum()  # Diferencia de rounds considerando que el jugador es J1
+#                 # Ajuste en caso de que el jugador sea J2
+#                 if orden == 'segundo':
+#                     diferenciaRelativa *= -1
+#                 historialIndividual['Diferencia de rounds'] = diferenciaRelativa  # Se agrega la diferencia relativa de rounds al historial individual
+#                 historialTotal.append(historialIndividual)  # Al historial total se agregan los datos del jugador consultado
 
-except Exception as e:
-    print(f"Error al hacer el llamado API: {e}")
+#     df = pd.DataFrame(historialTotal)
+#     print(df.to_string(index=False))
+
+# except Exception as e:
+#     print(f"Error al hacer el llamado API: {e}")
 
 #-----------------------------------------------------------
 
