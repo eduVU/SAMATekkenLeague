@@ -25,9 +25,10 @@ while(True):
         "3. Obtener informacion general del torneo\n"
         "4. Obtener informacion general de los jugadores\n"
         "5. Obtener historial del torneo para cada jugador\n"
-        "6. Generar todos los archivos de registro para este torneo\n"
-        "7. Salir\n")
-    if opcion == "1":
+        "6. Subir archivos CSV a Google Sheets\n"
+        "7. Generar todos los archivos de registro para este torneo y subirlos a Google Sheets\n"
+        "8. Salir\n")
+    if opcion == '1':
         if estatusTorneo == 'ok_empty':
             print("El archivo de registro de torneos esta vacio")
         else:
@@ -43,32 +44,59 @@ while(True):
         else:
             print("\nHistorial de partidas por jugador: ")
             data_utils.mostrardf(dfPartidas, modo=2)
-    elif opcion == "2":
+    elif opcion == '2':
         tourneyUrl = input("\nIngrese la nueva URL del torneo: \n") 
         print("¡Cambio registrado con exito!")
-    elif opcion == "3":
+    elif opcion == '3':
         api_utils.mostrar_info_torneo(tourneyUrl)
         opcionTorneo = input("\n¿Desea actualizar el registro del torneo? (y/n): \n")
         if opcionTorneo == 'y':
             dfTorneo, estatusTorneo = data_utils.crear_registro(tourneyUrl, "torneo")
-    elif opcion == "4":
+    elif opcion == '4':
         api_utils.mostrar_info_jugadores(tourneyUrl)
         opcionJugadores = input("\n¿Desea actualizar el registro de los jugadores? (y/n): \n")
         if opcionJugadores == 'y':
             dfJugadores, estatusJugadores = data_utils.crear_registro(tourneyUrl, "jugadores")
-    elif opcion == "5":
+    elif opcion == '5':
         api_utils.mostrar_info_partidas(tourneyUrl)
         opcionPartidas = input("\n¿Desea actualizar el registro de las partidas? (y/n): \n")
         if opcionPartidas == 'y':
             dfPartidas, estatusPartidas = data_utils.crear_registro(tourneyUrl, "partidas")
-    elif opcion == "6":
+    elif opcion == '6':
+        bucle = 'cerrado'
+        while(bucle == 'cerrado'):
+            opcion2 = input("\nSeleccione una opcion: \n"
+            "a. Subir archivo del torneo\n"
+            "b. Subir archivo de los participantes\n"
+            "c. Subir archivo del historial del torneo\n"
+            "d. Subir todos los archivos\n"
+            "e. Salir\n")
+            if opcion2 == 'a':
+                api_utils.actualizar_spreadsheet("SAMATekkenLeague/challongeAPI/torneo.csv", modo='torneo')
+            elif opcion2  == 'b':
+                api_utils.actualizar_spreadsheet("SAMATekkenLeague/challongeAPI/jugadores.csv", modo='jugadores')
+            elif opcion2 == 'c':
+                api_utils.actualizar_spreadsheet("SAMATekkenLeague/challongeAPI/partidas.csv", modo='partidas')
+            elif opcion2 == 'd':
+                api_utils.actualizar_spreadsheet("SAMATekkenLeague/challongeAPI/torneo.csv", modo='todos')
+                bucle = 'abierto'
+            elif opcion2 == 'e':
+                bucle = 'abierto'
+            else:
+                print("ERROR: Ingrese una opción válida del menú.\n")
+    elif opcion == '7':
         print('\nCreando registro del torneo...\n')
         dfTorneo, estatusTorneo = data_utils.crear_registro(tourneyUrl, "torneo")
+        
         print('\nCreando registro de los jugadores...\n')
         dfJugadores, estatusJugadores = data_utils.crear_registro(tourneyUrl, "jugadores")
+
         print('\nCreando registro de partidas...\n')
         dfPartidas, estatusPartidas = data_utils.crear_registro(tourneyUrl, "partidas")
-    elif opcion == "7":
+
+        print('\nSubiendo registros a Google Sheets...\n')
+        api_utils.actualizar_spreadsheet("SAMATekkenLeague/challongeAPI/torneo.csv", modo='todos')
+    elif opcion == '8':
         print("¡Adiós!")
         break
     else:

@@ -1,6 +1,9 @@
 import challonge
 import numpy as np
+import pandas as pd
+import gspread
 import threading, concurrent.futures
+from google.oauth2.service_account import Credentials
 
 # thread_local = threading.local() 
 # Inicializacion del threading
@@ -306,6 +309,65 @@ def obtener_datos_partidas(tourneyUrl):
         return historialTotal
     except Exception as e:
         print(f"Error al hacer el llamado API: {e}")
+
+"""
+Esta funcion se conecta a la cuenta de Google Drive del Team SAMA y actualiza las hojas de Google Sheets con los datos creados en los archivos CSV
+
+Parametros:
+idSpreadsheet(Str): ID unico de la hoja de calculo de Google Sheets
+credenciales(GoogleCredentials): objeto con credenciales de autenticacion de Google
+gc(GoogleClient): objeto de cliente de Google configurado para conectarse via API a Google Drive
+gsheet(GoogleSpreadsheet): hoja de calculo de Google Sheets
+hoja(GoogleWorksheet): hoja del archivo donde se desea trabajar
+dfCsv(DataFrame): DataFrame con la informacion del archivo CSV que se sube a Google Sheets
+modo(Str): determina cual o cuales archivos se estan subiendo a la hoja de calculo, para asi asignar la columna que corresponde
+"""
+def actualizar_spreadsheet(nombreArchivo, modo):
+    try:
+        idSpreadsheet = '1KFakq9fYQ9aWhBYPudnkCtTKppUDLjoZWTJwWhlVrPU'  # ID del Google Sheet
+        rutaCreds = 'SAMATekkenLeague/challongeAPI/credentials.json'  # Ruta al archivo de credenciales descargado desde Google Cloud
+        credenciales = Credentials.from_service_account_file(rutaCreds,
+            scopes=['https://www.googleapis.com/auth/spreadsheets',
+                    'https://www.googleapis.com/auth/drive']
+        )
+
+        gc = gspread.authorize(credenciales)  # Autenticacion con gspread
+        gsheet = gc.open_by_key(idSpreadsheet)  # Abrir la hoja de calculo usado su ID
+        # gsheet = gc.open("SAMA Tekken League")  # Abrir la hoja de calculo usando el nombre
+
+        hoja = gsheet.worksheet("DatosTorneo")  # Seleccionar un tab por nombre
+        # hoja = gsheet.get_worksheet(0)  # Seleccionar un tab por indice
+
+        if modo != 'todos':
+            dfCsv = pd.read_csv(nombreArchivo)
+            data = [dfCsv.columns.values.tolist()] + dfCsv.values.tolist()
+            if modo == 'torneo':
+                hoja.update(data, 'A1')  # Inserta los datos del torneo desde la columna A, fila 1
+            elif modo == 'jugadores':
+                hoja.update(data, 'D1')  # Inserta los datos de los jugadores desde la columna D, fila 1
+            elif modo == 'partidas':
+                hoja.update(data, 'H1')  # Inserta los datos de las partidas desde la columna H, fila 1
+            print(f"El archivo '{nombreArchivo}' ha sido subido exitosamente a la hoja 'SAMA Tekken League' en la pestaña 'DatosTorneo'")            
+        else:
+            archivoTorneo = 'SAMATekkenLeague/challongeAPI/torneo.csv'
+            archivoJugadores = 'SAMATekkenLeague/challongeAPI/jugadores.csv'
+            archivoPartidas = 'SAMATekkenLeague/challongeAPI/partidas.csv'
+            dfCsv = pd.read_csv(archivoTorneo)
+            data = [dfCsv.columns.values.tolist()] + dfCsv.values.tolist()
+            dfCsv2 = pd.read_csv(archivoJugadores)
+            data2 = [dfCsv2.columns.values.tolist()] + dfCsv2.values.tolist()
+            dfCsv3 = pd.read_csv(archivoPartidas)
+            data3 = [dfCsv3.columns.values.tolist()] + dfCsv3.values.tolist()
+
+            hoja.clear()  # Limpiar hoja antes de escribir
+            hoja.update(data, 'A1')
+            hoja.update(data2, 'D1')
+            hoja.update(data3, 'H1')
+            print(f"Todos los archivos han sido subidos exitosamente a la hoja 'SAMA Tekken League' en la pestaña 'DatosTorneo'")
+            # Crear nuevas hojas: gsheet.add_worksheet(title="NuevaPestana", rows=100, cols=20)
+    except Exception as e:
+        print(f'Ha ocurrido un error al intentar acceder a la cuenta de Google: {e}')
+        # Crear nuevas hojas: gsheet.add_worksheet(title="NuevaPestana", rows=100, cols=20)
 
 
 # # Esta funcion crea una sesión de requests local para threading en caso de que no exista una.
