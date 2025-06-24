@@ -1,0 +1,31 @@
+Jugador,Ronda,No. Partida,Oponente,Resultado,Set 1,Set 2,Set 3,Diferencia de rounds
+SAMA | CM2609,2,10,SAMA|AbrahamCR,Victoria,3-2,3-2,0-0,2
+SAMA | CM2609,3,11,SAMA | Calitri,Victoria,1-3,3-2,1-3,3
+SAMA|AbrahamCR,1,1,SAMA | Darien :),Derrota,3-2,2-3,0-3,-3
+SAMA|AbrahamCR,2,10,SAMA | CM2609,Derrota,3-2,3-2,0-0,-2
+SAMA | Calitri,2,9,SAMA | Darien :),Derrota,3-2,3-1,0-0,-3
+SAMA | Calitri,1,2,SAMA | Absolute,Derrota,1-3,1-3,0-0,-4
+SAMA | Calitri,3,11,SAMA | CM2609,Derrota,1-3,3-2,1-3,-3
+SAMA | Kenshiro,3,12,SAMA | Darien :),Victoria,3-1,1-3,3-2,1
+SAMA | Kenshiro,1,3,SAMA|Tenebrae,Derrota,3-2,2-3,1-3,-2
+SAMA | Kenshiro,2,8,SAMA | Absolute,Derrota,3-1,3-0,0-0,-5
+SAMA | GhostRider,1,4,SAMA|BurningKnuckle,Derrota,2-3,3-2,2-3,-1
+SAMA | GhostRider,2,7,SAMA|Tenebrae,Victoria,1-3,2-3,0-0,3
+SAMA | GhostRider,3,13,SAMA | Absolute,Victoria,3-2,2-3,3-2,1
+SAMA|Faraon,1,5,SAMA | Pereira,Victoria,3-1,3-0,0-0,5
+SAMA|Faraon,2,6,SAMA|BurningKnuckle,Victoria,2-3,3-1,0-3,2
+SAMA|Faraon,3,14,SAMA|Tenebrae,Victoria,3-2,3-1,0-0,3
+SAMA | Pereira,1,5,SAMA|Faraon,Derrota,3-1,3-0,0-0,-5
+SAMA | Pereira,3,15,SAMA|BurningKnuckle,Derrota,1-3,1-3,0-0,-4
+SAMA|BurningKnuckle,1,4,SAMA | GhostRider,Victoria,2-3,3-2,2-3,1
+SAMA|BurningKnuckle,2,6,SAMA|Faraon,Derrota,2-3,3-1,0-3,-2
+SAMA|BurningKnuckle,3,15,SAMA | Pereira,Victoria,1-3,1-3,0-0,4
+SAMA|Tenebrae,1,3,SAMA | Kenshiro,Victoria,3-2,2-3,1-3,2
+SAMA|Tenebrae,2,7,SAMA | GhostRider,Derrota,1-3,2-3,0-0,-3
+SAMA|Tenebrae,3,14,SAMA|Faraon,Derrota,3-2,3-1,0-0,-3
+SAMA | Absolute,1,2,SAMA | Calitri,Victoria,1-3,1-3,0-0,4
+SAMA | Absolute,2,8,SAMA | Kenshiro,Victoria,3-1,3-0,0-0,5
+SAMA | Absolute,3,13,SAMA | GhostRider,Derrota,3-2,2-3,3-2,-1
+SAMA | Darien :),2,9,SAMA | Calitri,Victoria,3-2,3-1,0-0,3
+SAMA | Darien :),3,12,SAMA | Kenshiro,Derrota,3-1,1-3,3-2,-1
+SAMA | Darien :),1,1,SAMA|AbrahamCR,Victoria,3-2,2-3,0-3,3
